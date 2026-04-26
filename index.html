@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>West Bengal Election 2026 — Live Prediction Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e28;
+    --bg4: #21263300;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0ece4;
+    --text2: #9a9690;
+    --text3: #5c5a56;
+    --tmc: #00b87a;
+    --tmc2: #00875a;
+    --tmc-bg: rgba(0,184,122,0.1);
+    --bjp: #ff6b2b;
+    --bjp2: #cc4a00;
+    --bjp-bg: rgba(255,107,43,0.1);
+    --left: #e83a3a;
+    --left-bg: rgba(232,58,58,0.1);
+    --inc: #2b8be8;
+    --inc-bg: rgba(43,139,232,0.1);
+    --others: #9b8aff;
+    --others-bg: rgba(155,138,255,0.1);
+    --gold: #f0c040;
+    --accent: #f0c040;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* HEADER */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,15,20,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; gap: 1.5rem;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+
+  .nav { display: flex; gap: 4px; }
+  .nav a {
+    font-size: 13px; color: var(--text2); text-decoration: none;
+    padding: 6px 14px; border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .nav a:hover, .nav a.active { color: var(--text); background: var(--bg3); }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.5s infinite; }
+
+  /* MAIN */
+  .main { max-width: 1400px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+
+  /* HERO */
+  .hero {
+    text-align: center; padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after {
+    content: ''; flex: 1; max-width: 80px;
+    height: 1px; background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .hero-eyebrow::after { background: linear-gradient(90deg, var(--gold), transparent); }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700; color: var(--text);
+    line-height: 1.15; margin-bottom: 0.75rem;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero-sub { font-size: 15px; color: var(--text2); margin-bottom: 1.5rem; }
+  .hero-dates {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap;
+  }
+  .date-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 30px;
+    border: 1px solid var(--border2);
+    font-size: 13px; font-weight: 500;
+  }
+  .date-pill.done { border-color: var(--tmc); color: var(--tmc); background: var(--tmc-bg); }
+  .date-pill.upcoming { border-color: var(--gold); color: var(--gold); background: rgba(240,192,64,0.08); }
+  .date-pill.result { border-color: var(--others); color: var(--others); background: var(--others-bg); }
+  .date-sep { color: var(--text3); font-size: 18px; }
+
+  /* GRID LAYOUT */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; margin-bottom: 1.25rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.25rem; }
+  @media(max-width:900px) { .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; } }
+  @media(min-width:900px) and (max-width:1100px) { .grid-3 { grid-template-columns:1fr 1fr; } .grid-4 { grid-template-columns:1fr 1fr; } }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(240,192,64,0.3), transparent);
+  }
+  .card-title {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text3); font-family: 'DM Mono', monospace;
+    margin-bottom: 1rem;
+  }
+  .card-title-lg {
+    font-size: 16px; font-weight: 600; color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  /* STAT CARDS */
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+  .stat-val { font-size: 2.2rem; font-weight: 600; color: var(--text); font-family: 'Playfair Display', serif; line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--text2); }
+  .stat-highlight { color: var(--gold); }
+
+  /* SECTION */
+  .section { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem; padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 600; color: var(--text);
+  }
+  .section-badge {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px;
+    background: var(--bg3); color: var(--text2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* SEAT STRIP */
+  .seat-strip-wrap { margin-bottom: 1.25rem; }
+  .seat-strip {
+    display: flex; height: 28px; border-radius: 6px;
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .seat-seg { height: 100%; transition: all 0.3s; cursor: pointer; }
+  .seat-seg:hover { filter: brightness(1.2); }
+  .majority-line {
+    display: flex; align-items: flex-start;
+    font-size: 11px; color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    position: relative; height: 20px;
+  }
+  .maj-marker {
+    position: absolute; left: 50.34%;
+    display: flex; flex-direction: column; align-items: center;
+    transform: translateX(-50%);
+  }
+  .maj-line { width: 1px; height: 8px; background: rgba(255,255,255,0.25); }
+  .maj-label { font-size: 10px; color: var(--text3); white-space: nowrap; margin-top: 2px; }
+
+  /* PARTY BARS */
+  .party-bar-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .party-name { width: 90px; font-size: 13px; font-weight: 500; color: var(--text); flex-shrink: 0; }
+  .bar-track {
+    flex: 1; height: 32px; background: var(--bg3);
+    border-radius: 4px; overflow: hidden; position: relative;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; padding-left: 10px;
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.95);
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-meta { display: flex; flex-direction: column; align-items: flex-end; width: 70px; flex-shrink: 0; }
+  .bar-pct { font-size: 13px; font-weight: 600; }
+  .bar-seats { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* CHART */
+  .chart-container { position: relative; width: 100%; }
+
+  /* CONSTITUENCY TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 10px 14px;
+    color: var(--text3); font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; font-family: 'DM Mono', monospace;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s; cursor: pointer;
+  }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 12px 14px; color: var(--text2); vertical-align: middle; }
+  tbody td:first-child { color: var(--text); font-weight: 500; }
+
+  /* PARTY BADGE */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-tmc { background: var(--tmc-bg); color: var(--tmc); }
+  .badge-bjp { background: var(--bjp-bg); color: var(--bjp); }
+  .badge-left { background: var(--left-bg); color: var(--left); }
+  .badge-inc { background: var(--inc-bg); color: var(--inc); }
+  .badge-others { background: var(--others-bg); color: var(--others); }
+
+  /* WIN PROBABILITY */
+  .win-bar-sm {
+    width: 100px; height: 5px; background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden;
+  }
+  .win-fill { height: 100%; border-radius: 3px; }
+
+  /* DISTRICT GRID */
+  .district-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; }
+  .district-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px;
+    cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .district-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .district-card.ph1 { border-left: 2px solid var(--tmc); }
+  .district-card.ph2 { border-left: 2px solid var(--gold); }
+  .district-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .district-meta { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .district-turnout { font-size: 16px; font-weight: 600; color: var(--gold); margin-top: 6px; }
+
+  /* CONSTITUENCY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 16px; width: 100%; max-width: 640px;
+    max-height: 85vh; overflow-y: auto;
+    transform: translateY(20px); transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 1.5rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+    position: sticky; top: 0; background: var(--bg2); z-index: 1;
+  }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg3); border: none; color: var(--text2);
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+  .modal-body { padding: 1.5rem; }
+
+  /* CANDIDATE CARD */
+  .cand-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 1rem 1.25rem;
+    margin-bottom: 12px;
+  }
+  .cand-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; flex-shrink: 0;
+  }
+  .cand-info { flex: 1; }
+  .cand-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .cand-party { font-size: 12px; color: var(--text2); }
+  .win-chance-label { font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+  .win-high { background: rgba(0,184,122,0.15); color: var(--tmc); }
+  .win-mid { background: rgba(240,192,64,0.12); color: var(--gold); }
+  .win-low { background: rgba(255,107,43,0.1); color: var(--bjp); }
+  .win-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .win-bar-lg {
+    flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+    border-radius: 4px; overflow: hidden;
+  }
+  .win-bar-lg-fill { height: 100%; border-radius: 4px; transition: width 1s; }
+  .win-pct { font-size: 14px; font-weight: 600; width: 36px; text-align: right; }
+  .factors { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .factor { font-size: 11px; padding: 3px 9px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text2); border: 1px solid var(--border); }
+
+  /* AI PANEL */
+  .ai-panel {
+    background: linear-gradient(135deg, #0d1520, #12101a);
+    border: 1px solid rgba(155,138,255,0.2);
+    border-radius: var(--radius); padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+  .ai-icon { font-size: 16px; }
+  .ai-title { font-size: 13px; font-weight: 600; color: var(--others); }
+  .ai-input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .ai-input {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(155,138,255,0.2);
+    border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px;
+    font-family: 'DM Sans', sans-serif; outline: none;
+    transition: border-color 0.2s;
+  }
+  .ai-input:focus { border-color: rgba(155,138,255,0.5); }
+  .ai-input::placeholder { color: var(--text3); }
+  .ai-btn {
+    padding: 10px 20px; border-radius: 8px; border: none;
+    background: var(--others); color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .ai-btn:hover { background: #8070ff; }
+  .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ai-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+  .ai-chip {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid rgba(155,138,255,0.2);
+    color: var(--text2); background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .ai-chip:hover { border-color: var(--others); color: var(--others); }
+  .ai-response {
+    font-size: 13px; color: var(--text2); line-height: 1.7;
+    min-height: 60px; padding: 12px; border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    white-space: pre-wrap;
+  }
+  .ai-response.loading::after {
+    content: '▋'; animation: blink 0.8s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* TURNOUT CHART */
+  .turnout-bars { display: flex; flex-direction: column; gap: 8px; }
+  .t-row { display: flex; align-items: center; gap: 10px; }
+  .t-name { font-size: 12px; color: var(--text2); width: 130px; flex-shrink: 0; }
+  .t-track { flex: 1; height: 20px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .t-fill { height: 100%; border-radius: 3px; display: flex; align-items: center; padding-left: 6px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); transition: width 1s; }
+  .t-pct { font-size: 12px; font-weight: 600; color: var(--gold); width: 44px; text-align: right; }
+
+  /* KEY ISSUES */
+  .issue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 10px; }
+  .issue-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+  }
+  .issue-icon { font-size: 20px; margin-bottom: 8px; }
+  .issue-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .issue-desc { font-size: 12px; color: var(--text3); line-height: 1.6; }
+  .issue-impact { font-size: 11px; margin-top: 8px; padding: 3px 8px; border-radius: 10px; display: inline-block; }
+  .high-impact { background: rgba(232,58,58,0.1); color: var(--left); }
+  .med-impact { background: rgba(240,192,64,0.1); color: var(--gold); }
+
+  /* TABS */
+  .tabs-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .tab-btn {
+    font-size: 13px; padding: 7px 16px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent; color: var(--text2);
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text3); font-size: 12px; line-height: 1.8;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* SCROLL ANIMATIONS */
+  .fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.5s, transform 0.5s; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media(max-width:600px) {
+    .main { padding: 1rem; }
+    .hero { padding: 1.5rem 0 1rem; }
+    .hero h1 { font-size: 1.8rem; }
+    .hero-dates { flex-direction: column; align-items: center; }
+    .date-sep { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      WB Election 2026
+    </div>
+    <nav class="nav">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#districts">Districts</a>
+      <a href="#constituencies">Constituencies</a>
+      <a href="#analysis">Analysis</a>
+    </nav>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE TRACKER
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <div class="hero-eyebrow">West Bengal Legislative Assembly Election</div>
+    <h1>294 Seats. Two Phases.<br><span>One Verdict.</span></h1>
+    <p class="hero-sub">Comprehensive prediction dashboard · Constituency-level analysis · AI-powered insights</p>
+    <div class="hero-dates">
+      <div class="date-pill done">✓ Phase 1 — Apr 23, 2026 · 152 seats</div>
+      <div class="date-sep">→</div>
+      <div class="date-pill upcoming">● Phase 2 — Apr 29, 2026 · 142 seats</div>
+      <div class="date-sep">→</div>
+      <div class="date-pill result">⬡ Results — May 4, 2026</div>
+    </div>
+  </section>
+
+  <!-- STATS ROW -->
+  <section id="overview" class="section fade-in">
+    <div class="grid-4">
+      <div class="stat-card">
+        <div class="stat-label">Total seats</div>
+        <div class="stat-val">294</div>
+        <div class="stat-sub">Majority at <span class="stat-highlight">148</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Phase 1 turnout</div>
+        <div class="stat-val" style="color:var(--tmc)">93.2%</div>
+        <div class="stat-sub">Highest ever in WB history</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Registered voters</div>
+        <div class="stat-val">6.83Cr</div>
+        <div class="stat-sub">Post SIR final roll</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">SIR deletions</div>
+        <div class="stat-val" style="color:var(--left)">91L</div>
+        <div class="stat-sub">Names removed — major controversy</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEAT PROJECTION + VOTE SHARE -->
+  <section class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Seat Projection & Vote Share</h2>
+      <span class="section-badge">Pre-exit poll estimates</span>
+    </div>
+
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-title">Seat distribution (294 total)</div>
+      <div class="seat-strip-wrap">
+        <div class="seat-strip" id="seatStrip"></div>
+        <div class="majority-line">
+          <div class="maj-marker">
+            <div class="maj-line"></div>
+            <div class="maj-label">148 majority</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:0.75rem;" id="seatLegend"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Projected vote share</div>
+        <div id="partyBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Seat range projection</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="seatChart" role="img" aria-label="Bar chart showing seat projections for each party in WB 2026 election">WB 2026 Seat projections: AITC 165, BJP 112, Left 13, INC 2, Others 2</canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 TURNOUT -->
+  <section class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Phase 1 — District Turnout</h2>
+      <span class="section-badge">Apr 23 · 152 seats · Completed</span>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">District-wise voter turnout</div>
+        <div class="turnout-bars" id="turnoutBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Turnout vs 2021 comparison</div>
+        <div class="chart-container" style="height:260px;">
+          <canvas id="turnoutChart" role="img" aria-label="Bar chart comparing 2021 and 2026 Phase 1 voter turnout by district">Turnout comparison: 2021 vs 2026 Phase 1 across WB districts</canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISTRICTS -->
+  <section id="districts" class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Districts at a Glance</h2>
+      <span class="section-badge">All 23 districts</span>
+    </div>
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="showPhase('all',this)">All districts</button>
+      <button class="tab-btn" onclick="showPhase('1',this)">Phase 1 — Apr 23</button>
+      <button class="tab-btn" onclick="showPhase('2',this)">Phase 2 — Apr 29</button>
+    </div>
+    <div class="district-grid" id="districtGrid"></div>
+  </section>
+
+  <!-- CONSTITUENCIES -->
+  <section id="constituencies" class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Key Constituency Predictions</h2>
+      <span class="section-badge">High-profile seats</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Constituency</th>
+            <th>District</th>
+            <th>Phase</th>
+            <th>Leading candidate</th>
+            <th>Party</th>
+            <th>Win prob.</th>
+            <th>Margin (2021)</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="constTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- KEY ISSUES -->
+  <section class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Key Election Issues</h2>
+      <span class="section-badge">Campaign factors</span>
+    </div>
+    <div class="issue-grid">
+      <div class="issue-card">
+        <div class="issue-icon">📋</div>
+        <div class="issue-title">Electoral Roll SIR</div>
+        <div class="issue-desc">~91 lakh voter names deleted. AITC alleges mass disenfranchisement; BJP defends it as removal of bogus & illegal entries. Under judicial scrutiny.</div>
+        <div class="issue-impact high-impact">High impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">⏱️</div>
+        <div class="issue-title">15-year anti-incumbency</div>
+        <div class="issue-desc">AITC has ruled since 2011. School recruitment scam and corruption allegations are the opposition's prime attack line against Mamata's government.</div>
+        <div class="issue-impact high-impact">High impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">📜</div>
+        <div class="issue-title">CAA & Citizenship</div>
+        <div class="issue-desc">BJP promises faster CAA processing for Matua and refugee communities. AITC calls it electoral polarization. Key issue in Cooch Behar & North Bengal.</div>
+        <div class="issue-impact high-impact">High impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">⚖️</div>
+        <div class="issue-title">Women's Safety</div>
+        <div class="issue-desc">2024 RG Kar Medical College rape-murder case dominated discourse. BJP highlighted law & order failures; AITC cited NCRB data on Kolkata's low crime rate.</div>
+        <div class="issue-impact high-impact">High impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🏛️</div>
+        <div class="issue-title">Bengali Asmita</div>
+        <div class="issue-desc">AITC champions Bengali identity and state autonomy. BJP frames it through Hindu consolidation and national security. A key urban and semi-urban battleground.</div>
+        <div class="issue-impact med-impact">Medium impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">💼</div>
+        <div class="issue-title">Jobs & Welfare</div>
+        <div class="issue-desc">BJP targets youth with industrial revival promises; AITC defends its welfare schemes and infrastructure. Recruitment scam made jobs a vulnerability for AITC.</div>
+        <div class="issue-impact med-impact">Medium impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🛂</div>
+        <div class="issue-title">Border & Migration</div>
+        <div class="issue-desc">BJP frames cross-border movement, Siliguri Corridor as national security threat. AITC rejects claims as communal polarization targeting minorities.</div>
+        <div class="issue-impact med-impact">Medium impact</div>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🏔️</div>
+        <div class="issue-title">Gorkhaland / Hills</div>
+        <div class="issue-desc">Darjeeling hills demand for autonomy resurfaces. BGPM backs AITC; BJP's GJM allies contest. Darjeeling, Kurseong, Kalimpong constituencies pivotal.</div>
+        <div class="issue-impact med-impact">Medium impact</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI ANALYSIS -->
+  <section id="analysis" class="section fade-in">
+    <div class="section-header">
+      <h2 class="section-title">AI-Powered Live Analysis</h2>
+      <span class="section-badge">Powered by Claude</span>
+    </div>
+    <div class="ai-panel">
+      <div class="ai-header">
+        <div class="ai-icon">◆</div>
+        <div class="ai-title">Ask Claude anything about WB Election 2026</div>
+      </div>
+      <div class="ai-chips">
+        <button class="ai-chip" onclick="askPreset(this)">Who is likely to win Nandigram?</button>
+        <button class="ai-chip" onclick="askPreset(this)">What does high Phase 1 turnout mean?</button>
+        <button class="ai-chip" onclick="askPreset(this)">Analyse TMC vs BJP battle in North Bengal</button>
+        <button class="ai-chip" onclick="askPreset(this)">How will SIR affect results?</button>
+        <button class="ai-chip" onclick="askPreset(this)">Key swing constituencies in Phase 2</button>
+        <button class="ai-chip" onclick="askPreset(this)">What are Mamata's chances of returning to power?</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="aiQuery" placeholder="Ask a question about the election..." onkeydown="if(event.key==='Enter')runAnalysis()">
+        <button class="ai-btn" id="aiBtn" onclick="runAnalysis()">Analyse ↗</button>
+      </div>
+      <div class="ai-response" id="aiResponse" style="display:none;"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- CONSTITUENCY MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div id="modalTitle" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:4px;"></div>
+        <div id="modalMeta" style="font-size:13px;color:var(--text2);"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<footer>
+  <p>West Bengal Assembly Election 2026 · Data sourced from Election Commission of India, Wikipedia, Republic World, The Federal</p>
+  <p style="margin-top:6px;">Seat projections are pre-exit poll estimates based on opinion surveys and 2021 baseline. Official exit polls release after 6:30 PM on Apr 29, 2026.</p>
+  <p style="margin-top:6px;">AI analysis powered by Claude (Anthropic) · Dashboard built for informational purposes only</p>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+const parties = [
+  { name:"AITC (TMC)", abbr:"AITC", seats:165, min:155, max:175, pct:43, color:"#00b87a" },
+  { name:"BJP",         abbr:"BJP",  seats:112, min:100, max:125, pct:35, color:"#ff6b2b" },
+  { name:"Left Front",  abbr:"Left", seats:13,  min:8,   max:18,  pct:10, color:"#e83a3a" },
+  { name:"INC",         abbr:"INC",  seats:2,   min:1,   max:5,   pct:5,  color:"#2b8be8" },
+  { name:"AJUP/Others", abbr:"Oth",  seats:2,   min:2,   max:6,   pct:7,  color:"#9b8aff" },
+];
+
+const districts = [
+  // Phase 1
+  { name:"Cooch Behar",      seats:9,  phase:1, turnout:96.2, leading:"BJP",  color:"#ff6b2b" },
+  { name:"Alipurduar",       seats:5,  phase:1, turnout:93.2, leading:"BJP",  color:"#ff6b2b" },
+  { name:"Jalpaiguri",       seats:7,  phase:1, turnout:94.8, leading:"BJP",  color:"#ff6b2b" },
+  { name:"Darjeeling",       seats:6,  phase:1, turnout:89.0, leading:"BJP",  color:"#ff6b2b" },
+  { name:"Kalimpong",        seats:1,  phase:1, turnout:83.0, leading:"AITC", color:"#00b87a" },
+  { name:"Uttar Dinajpur",   seats:9,  phase:1, turnout:94.2, leading:"AITC", color:"#00b87a" },
+  { name:"Dakshin Dinajpur", seats:6,  phase:1, turnout:95.4, leading:"AITC", color:"#00b87a" },
+  { name:"Malda",            seats:12, phase:1, turnout:94.8, leading:"AITC", color:"#00b87a" },
+  { name:"Murshidabad",      seats:22, phase:1, turnout:93.7, leading:"AITC", color:"#00b87a" },
+  { name:"Birbhum",          seats:11, phase:1, turnout:94.5, leading:"AITC", color:"#00b87a" },
+  { name:"Purba Medinipur",  seats:16, phase:1, turnout:92.8, leading:"Split",color:"#888" },
+  { name:"Bankura",          seats:12, phase:1, turnout:92.6, leading:"AITC", color:"#00b87a" },
+  { name:"Jhargram",         seats:4,  phase:1, turnout:92.3, leading:"AITC", color:"#00b87a" },
+  { name:"Paschim Medinipur",seats:15, phase:1, turnout:92.2, leading:"Split",color:"#888" },
+  { name:"Purulia",          seats:9,  phase:1, turnout:91.6, leading:"BJP",  color:"#ff6b2b" },
+  { name:"Paschim Bardhaman",seats:9,  phase:1, turnout:90.3, leading:"AITC", color:"#00b87a" },
+  // Phase 2
+  { name:"Nadia",            seats:17, phase:2, turnout:null, leading:"Split",color:"#888" },
+  { name:"North 24 Parganas",seats:33, phase:2, turnout:null, leading:"AITC", color:"#00b87a" },
+  { name:"South 24 Parganas",seats:31, phase:2, turnout:null, leading:"AITC", color:"#00b87a" },
+  { name:"Kolkata",          seats:11, phase:2, turnout:null, leading:"AITC", color:"#00b87a" },
+  { name:"Howrah",           seats:16, phase:2, turnout:null, leading:"AITC", color:"#00b87a" },
+  { name:"Hooghly",          seats:18, phase:2, turnout:null, leading:"Split",color:"#888" },
+  { name:"Purba Bardhaman",  seats:16, phase:2, turnout:null, leading:"AITC", color:"#00b87a" },
+];
+
+const constituencies = [
+  { name:"Nandigram",          district:"Purba Medinipur",  phase:2, margin2021:1956,  leading:"Suvendu Adhikari", party:"BJP", partyKey:"bjp",
+    candidates:[
+      { name:"Suvendu Adhikari", party:"BJP", initials:"SA", color:"#ff6b2b", win:52,
+        factors:["2021 winner (1956 margin)","High-profile BJP leader","Anti-AITC sentiment","Modi wave in rural Bengal"] },
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:43,
+        factors:["Mamata's prestige battle","Welfare scheme beneficiaries","Women voters","Minority consolidation"] },
+      { name:"Left candidate",   party:"CPI(M)",initials:"LF",color:"#e83a3a", win:5,
+        factors:["Residual left base","Vote split hurts AITC"] },
+    ]},
+  { name:"Bhabanipur",         district:"Kolkata",           phase:2, margin2021:58832, leading:"Mamata Banerjee",  party:"AITC",partyKey:"tmc",
+    candidates:[
+      { name:"Mamata Banerjee",  party:"AITC",initials:"MB", color:"#00b87a", win:74,
+        factors:["CM's own constituency","Massive brand equity","Urban welfare delivery","Bengali identity champion"] },
+      { name:"BJP candidate",    party:"BJP", initials:"BP", color:"#ff6b2b", win:22,
+        factors:["Urban Hindu vote","Youth unemployment issue"] },
+      { name:"Left+INC",         party:"LF+INC",initials:"LI",color:"#e83a3a",win:4,
+        factors:["Legacy votes","Symbolic contest"] },
+    ]},
+  { name:"Diamond Harbour",   district:"South 24 Parganas", phase:2, margin2021:67318, leading:"Abhishek Banerjee",party:"AITC",partyKey:"tmc",
+    candidates:[
+      { name:"Abhishek Banerjee",party:"AITC",initials:"AB", color:"#00b87a", win:69,
+        factors:["TMC national general secretary","Lok Sabha 2024 winner","Youth outreach programs","Strong grassroots org"] },
+      { name:"BJP candidate",    party:"BJP", initials:"BP", color:"#ff6b2b", win:27,
+        factors:["Hindu consolidation push","ED case narrative"] },
+      { name:"Others",           party:"Others",initials:"OT",color:"#9b8aff",win:4,
+        factors:["Protest votes"] },
+    ]},
+  { name:"Siliguri",          district:"Darjeeling",         phase:1, margin2021:7423,  leading:"BJP candidate",  party:"BJP", partyKey:"bjp",
+    candidates:[
+      { name:"BJP candidate",    party:"BJP", initials:"BP", color:"#ff6b2b", win:47,
+        factors:["2021 winner","North Bengal stronghold","CAA + Matua vote","89% Darjeeling turnout"] },
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:40,
+        factors:["Urban trade vote","Welfare delivery","Road & infra push"] },
+      { name:"Left Front",       party:"CPI(M)",initials:"LF",color:"#e83a3a",win:13,
+        factors:["Former left bastion","Trade union base"] },
+    ]},
+  { name:"Mathabhanga",       district:"Cooch Behar",        phase:1, margin2021:12740, leading:"Nisith Pramanik", party:"BJP", partyKey:"bjp",
+    candidates:[
+      { name:"Nisith Pramanik",  party:"BJP", initials:"NP", color:"#ff6b2b", win:63,
+        factors:["MP-turned-candidate","Record 96.2% Cooch Behar turnout","Matua community dominance","CAA accelerator promise"] },
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:34,
+        factors:["Welfare scheme voters","Minority block vote"] },
+      { name:"Others",           party:"Others",initials:"OT",color:"#9b8aff",win:3,
+        factors:["Fragmented smaller parties"] },
+    ]},
+  { name:"Baharampur",        district:"Murshidabad",        phase:1, margin2021:23000, leading:"Adhir Ranjan",   party:"INC", partyKey:"inc",
+    candidates:[
+      { name:"Adhir Ranjan Chowdhury",party:"INC",initials:"AR",color:"#2b8be8",win:41,
+        factors:["Veteran Congress MP","Strong personal brand","Hindu + minority split vote","INC vs AITC rivalry"] },
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:47,
+        factors:["Dominant party machinery","Welfare delivery","TMC resurgence in Murshidabad"] },
+      { name:"BJP/Left",         party:"BJP/LF",initials:"BL",color:"#e83a3a",win:12,
+        factors:["Hindu consolidation","Legacy left vote split"] },
+    ]},
+  { name:"Asansol South",     district:"Paschim Bardhaman",  phase:1, margin2021:8800,  leading:"AITC candidate",party:"AITC",partyKey:"tmc",
+    candidates:[
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:51,
+        factors:["Industrial worker vote","Welfare schemes","Coal belt consolidation","90.3% turnout boost"] },
+      { name:"BJP candidate",    party:"BJP", initials:"BP", color:"#ff6b2b", win:43,
+        factors:["Strong 2021 showing","Jobs & industry narrative","Hindu vote"] },
+      { name:"CPI(M)",           party:"CPI(M)",initials:"LF",color:"#e83a3a",win:6,
+        factors:["Trade union legacy","Workers vote"] },
+    ]},
+  { name:"Bidhannagar",       district:"North 24 Parganas",  phase:2, margin2021:15000, leading:"AITC candidate",party:"AITC",partyKey:"tmc",
+    candidates:[
+      { name:"AITC candidate",   party:"AITC",initials:"TC", color:"#00b87a", win:61,
+        factors:["IT corridor vote","Urban middle class","State capital proximity","Party machinery"] },
+      { name:"BJP candidate",    party:"BJP", initials:"BP", color:"#ff6b2b", win:34,
+        factors:["Urban educated vote","Anti-incumbency","BJP national brand"] },
+      { name:"Left+INC",         party:"LF+INC",initials:"LI",color:"#e83a3a",win:5,
+        factors:["Legacy protest vote"] },
+    ]},
+];
+
+const turnoutData = [
+  { name:"Cooch Behar",      t26:96.2, t21:82.1 },
+  { name:"Dakshin Dinajpur", t26:95.4, t21:79.3 },
+  { name:"Malda",            t26:94.8, t21:80.2 },
+  { name:"Jalpaiguri",       t26:94.8, t21:78.9 },
+  { name:"Birbhum",          t26:94.5, t21:81.5 },
+  { name:"Uttar Dinajpur",   t26:94.2, t21:79.8 },
+  { name:"Murshidabad",      t26:93.7, t21:80.4 },
+  { name:"Alipurduar",       t26:93.2, t21:77.6 },
+  { name:"Purba Medinipur",  t26:92.8, t21:82.3 },
+  { name:"Bankura",          t26:92.6, t21:79.1 },
+  { name:"Jhargram",         t26:92.3, t21:78.5 },
+  { name:"Paschim Medinipur",t26:92.2, t21:80.0 },
+  { name:"Purulia",          t26:91.6, t21:77.9 },
+  { name:"Paschim Bardhaman",t26:90.3, t21:76.8 },
+  { name:"Darjeeling",       t26:89.0, t21:74.2 },
+  { name:"Kalimpong",        t26:83.0, t21:71.4 },
+];
+
+// ── RENDER SEAT STRIP ──
+function renderSeatStrip() {
+  const strip = document.getElementById('seatStrip');
+  const legend = document.getElementById('seatLegend');
+  const total = 294;
+  parties.forEach(p => {
+    const w = ((p.seats / total)*100).toFixed(2);
+    const seg = document.createElement('div');
+    seg.className = 'seat-seg';
+    seg.style.cssText = `width:${w}%;background:${p.color};`;
+    seg.title = `${p.name}: ${p.seats} seats`;
+    strip.appendChild(seg);
+    legend.innerHTML += `<span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#9a9690;">
+      <span style="width:10px;height:10px;border-radius:2px;background:${p.color};display:inline-block;"></span>
+      <b style="color:#f0ece4;">${p.abbr}</b> ${p.min}–${p.max}
+    </span>`;
+  });
+}
+
+// ── RENDER PARTY BARS ──
+function renderPartyBars() {
+  const el = document.getElementById('partyBars');
+  parties.forEach(p => {
+    el.innerHTML += `<div class="party-bar-row">
+      <div class="party-name">${p.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:0%;background:${p.color};" data-w="${p.pct*1.8}">
+          ${p.pct}%
+        </div>
+      </div>
+      <div class="bar-meta">
+        <div class="bar-pct" style="color:${p.color}">${p.pct}%</div>
+        <div class="bar-seats">~${p.seats} seats</div>
+      </div>
+    </div>`;
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      b.style.width = b.dataset.w + '%';
+    });
+  }, 300);
+}
+
+// ── CHART: SEAT PROJECTION ──
+function renderSeatChart() {
+  const ctx = document.getElementById('seatChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: parties.map(p => p.abbr),
+      datasets: [
+        { label: 'Min', data: parties.map(p=>p.min), backgroundColor: parties.map(p=>p.color+'44'), borderWidth:0 },
+        { label: 'Projected', data: parties.map(p=>p.seats), backgroundColor: parties.map(p=>p.color), borderWidth:0, borderRadius:4 },
+        { label: 'Max', data: parties.map(p=>p.max-p.seats), backgroundColor: parties.map(p=>p.color+'33'), borderWidth:0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { stacked:false, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9a9690',font:{size:12}} },
+        y: { grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9a9690',font:{size:11}}, min:0, max:200 }
+      }
+    }
+  });
+}
+
+// ── TURNOUT BARS ──
+function renderTurnoutBars() {
+  const el = document.getElementById('turnoutBars');
+  const top8 = turnoutData.slice(0,8);
+  top8.forEach(d => {
+    const w = ((d.t26/100)*100).toFixed(1);
+    const r = Math.round((d.t26/96.2)*100);
+    el.innerHTML += `<div class="t-row">
+      <div class="t-name">${d.name}</div>
+      <div class="t-track">
+        <div class="t-fill" style="width:0%;background:linear-gradient(90deg,#00b87a,#00875a);" data-w="${w}">${d.t26}%</div>
+      </div>
+      <div class="t-pct">${d.t26}%</div>
+    </div>`;
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.t-fill').forEach(b => { b.style.width = b.dataset.w + '%'; });
+  }, 400);
+}
+
+// ── CHART: TURNOUT COMPARISON ──
+function renderTurnoutChart() {
+  const ctx = document.getElementById('turnoutChart').getContext('2d');
+  const labels = turnoutData.slice(0,8).map(d => d.name.split(' ').slice(-1)[0]);
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'2021', data: turnoutData.slice(0,8).map(d=>d.t21), backgroundColor:'rgba(155,138,255,0.4)', borderWidth:0, borderRadius:3 },
+        { label:'2026', data: turnoutData.slice(0,8).map(d=>d.t26), backgroundColor:'#00b87a', borderWidth:0, borderRadius:3 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{ labels:{color:'#9a9690',font:{size:11}} } },
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9a9690',font:{size:10},maxRotation:35} },
+        y: { grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9a9690',font:{size:11}}, min:60, max:100 }
+      }
+    }
+  });
+}
+
+// ── DISTRICT GRID ──
+let phaseFilter = 'all';
+function renderDistricts(filter) {
+  const el = document.getElementById('districtGrid');
+  el.innerHTML = '';
+  const filtered = filter === 'all' ? districts : districts.filter(d => String(d.phase) === filter);
+  filtered.forEach(d => {
+    const leading = d.leading === 'Split' ? '⚡ Contested' : `▶ ${d.leading}`;
+    const leadColor = d.leading === 'BJP' ? '#ff6b2b' : d.leading === 'AITC' ? '#00b87a' : '#888';
+    const turnoutStr = d.turnout ? `${d.turnout}%` : 'Apr 29';
+    el.innerHTML += `<div class="district-card ph${d.phase}" onclick="filterConst('${d.name}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div class="district-name">${d.name}</div>
+        <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${d.phase===1?'rgba(0,184,122,0.1)':'rgba(240,192,64,0.1)'};color:${d.phase===1?'#00b87a':'#f0c040'};font-family:'DM Mono',monospace;">P${d.phase}</span>
+      </div>
+      <div class="district-meta">${d.seats} seats</div>
+      <div style="font-size:11px;color:${leadColor};margin-top:4px;font-weight:500;">${leading}</div>
+      <div class="district-turnout">${turnoutStr}</div>
+    </div>`;
+  });
+}
+
+function showPhase(p, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDistricts(p);
+}
+
+// ── CONSTITUENCY TABLE ──
+function renderConstTable(filter) {
+  const el = document.getElementById('constTable');
+  const filtered = filter ? constituencies.filter(c => c.district === filter) : constituencies;
+  el.innerHTML = '';
+  (filtered.length ? filtered : constituencies).forEach(c => {
+    const badgeClass = `badge-${c.partyKey === 'tmc' ? 'tmc' : c.partyKey === 'bjp' ? 'bjp' : c.partyKey === 'inc' ? 'inc' : 'others'}`;
+    const dotColor = parties.find(p=>p.abbr===c.party || p.name===c.party)?.color || '#888';
+    const winPct = c.candidates[0].win;
+    const winColor = winPct >= 60 ? '#00b87a' : winPct >= 45 ? '#f0c040' : '#ff6b2b';
+    el.innerHTML += `<tr onclick="openModal(${constituencies.indexOf(c)})">
+      <td>${c.name}</td>
+      <td style="color:var(--text3)">${c.district}</td>
+      <td><span style="font-size:11px;padding:2px 7px;border-radius:8px;background:${c.phase===1?'rgba(0,184,122,0.1)':'rgba(240,192,64,0.1)'};color:${c.phase===1?'#00b87a':'#f0c040'};">Ph ${c.phase}</span></td>
+      <td style="color:var(--text)">${c.leading}</td>
+      <td><span class="badge ${badgeClass}"><span class="badge-dot" style="background:${dotColor}"></span>${c.party}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="win-bar-sm"><div class="win-fill" style="width:${winPct}%;background:${winColor};"></div></div>
+          <span style="font-size:12px;color:${winColor};font-weight:600;">${winPct}%</span>
+        </div>
+      </td>
+      <td style="font-family:'DM Mono',monospace;color:var(--text3)">${c.margin2021.toLocaleString()}</td>
+      <td><span style="font-size:12px;color:var(--others);cursor:pointer;">View →</span></td>
+    </tr>`;
+  });
+}
+
+function filterConst(district) {
+  document.getElementById('constituencies').scrollIntoView({behavior:'smooth'});
+  setTimeout(() => renderConstTable(district), 400);
+}
+
+// ── MODAL ──
+function openModal(idx) {
+  const c = constituencies[idx];
+  document.getElementById('modalTitle').textContent = c.name;
+  document.getElementById('modalMeta').textContent = `${c.district} · Phase ${c.phase} · 2021 margin: ${c.margin2021.toLocaleString()} votes`;
+  let body = '';
+  c.candidates.forEach(cd => {
+    const winColor = cd.win >= 55 ? '#00b87a' : cd.win >= 35 ? '#f0c040' : '#ff6b2b';
+    const winLabel = cd.win >= 55 ? 'Likely winner' : cd.win >= 35 ? 'Competitive' : 'Underdog';
+    body += `<div class="cand-card">
+      <div class="cand-top">
+        <div class="avatar" style="background:${cd.color}22;color:${cd.color};">${cd.initials}</div>
+        <div class="cand-info">
+          <div class="cand-name">${cd.name}</div>
+          <div class="cand-party">${cd.party}</div>
+        </div>
+        <span class="win-chance-label" style="background:${winColor}20;color:${winColor};">${winLabel}</span>
+      </div>
+      <div class="win-row">
+        <span style="font-size:12px;color:var(--text3);width:110px;">Win probability</span>
+        <div class="win-bar-lg"><div class="win-bar-lg-fill" style="width:${cd.win}%;background:${cd.color};"></div></div>
+        <span class="win-pct" style="color:${winColor};">${cd.win}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">Key factors</div>
+      <div class="factors">${cd.factors.map(f=>`<span class="factor">${f}</span>`).join('')}</div>
+    </div>`;
+  });
+  // AI analysis trigger
+  body += `<button class="ai-btn" style="width:100%;margin-top:4px;" onclick="askConstAnalysis('${c.name}')">Get AI analysis for ${c.name} ↗</button>`;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(e) { if(e.target.id === 'modalOverlay') closeModalBtn(); }
+function closeModalBtn() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ── AI ANALYSIS ──
+async function runAnalysis(query) {
+  const q = query || document.getElementById('aiQuery').value.trim();
+  if(!q) return;
+  const btn = document.getElementById('aiBtn');
+  const resp = document.getElementById('aiResponse');
+  btn.disabled = true; btn.textContent = 'Thinking...';
+  resp.style.display = 'block';
+  resp.className = 'ai-response loading';
+  resp.textContent = '';
+
+  const systemPrompt = `You are an expert Indian political analyst specializing in West Bengal politics. You have deep knowledge of the 2026 West Bengal Assembly Elections. Here are the key facts:
+
+ELECTION SCHEDULE:
+- Phase 1: April 23, 2026 (152 seats, 16 districts) — COMPLETED
+- Phase 2: April 29, 2026 (142 seats, 7 districts) — UPCOMING
+- Results: May 4, 2026
+- Total seats: 294. Majority: 148.
+- Total registered voters: ~6.83 crore (after SIR revision)
+
+PHASE 1 TURNOUT (historic 93.19% — highest ever in WB):
+- Cooch Behar: 96.2%, Dakshin Dinajpur: 95.4%, Malda: 94.8%, Jalpaiguri: 94.8%, Birbhum: 94.5%, Uttar Dinajpur: 94.2%, Murshidabad: 93.7%, Alipurduar: 93.2%, Purba Medinipur: 92.8%, Bankura: 92.6%, Jhargram: 92.3%, Paschim Medinipur: 92.2%, Purulia: 91.6%, Paschim Bardhaman: 90.3%, Darjeeling: 89%, Kalimpong: 83%
+
+SEAT PROJECTIONS (pre-exit poll estimates):
+- AITC (TMC): 155-175 seats (~43% vote share)
+- BJP: 100-125 seats (~35% vote share)
+- Left Front (CPI-M led): 8-18 seats (~10% vote share)
+- INC: 1-5 seats (~5% vote share)
+- AJUP/Others: 2-6 seats (~7% vote share)
+
+KEY CANDIDATES:
+- Mamata Banerjee (AITC, Bhabanipur) — CM, defending seat, 74% win probability
+- Suvendu Adhikari (BJP, Nandigram) — BJP LoP, defending 2021 upset win, 52% win probability
+- Abhishek Banerjee (AITC, Diamond Harbour) — TMC national general secretary, 69% win probability
+- Nisith Pramanik (BJP, Mathabhanga) — Former MoS Home, 63% win probability in high-turnout Cooch Behar
+- Adhir Ranjan Chowdhury (INC, Baharampur) — WPCC chief, 41% win probability
+
+KEY ISSUES:
+1. SIR (Special Intensive Revision) — ~91 lakh voter deletions — central controversy
+2. 15-year AITC anti-incumbency + school recruitment scam
+3. CAA & Matua/refugee vote (BJP's North Bengal pitch)
+4. Bengali asmita (identity politics)
+5. Women's safety — RG Kar rape-murder case
+6. Jobs, industrial development, welfare schemes
+7. Border/migration issues in North Bengal
+
+PHASE 2 KEY DISTRICTS (includes most urban/semi-urban seats):
+Nadia, North 24 Parganas, South 24 Parganas, Kolkata, Howrah, Hooghly, Purba Bardhaman
+
+Provide sharp, data-backed, balanced analysis. Be direct and analytical. Use specific numbers where relevant. Keep answers under 200 words. Do not use markdown formatting.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system: systemPrompt,
+        messages:[{role:"user", content: q}]
+      })
+    });
+    const data = await res.json();
+    resp.className = 'ai-response';
+    resp.textContent = data.content?.[0]?.text || "Unable to get analysis.";
+  } catch(e) {
+    resp.className = 'ai-response';
+    resp.textContent = "Error connecting to AI. Please try again.";
+  }
+  btn.disabled = false; btn.textContent = 'Analyse ↗';
+  document.getElementById('aiQuery').value = '';
+}
+
+function askPreset(btn) {
+  document.getElementById('aiQuery').value = btn.textContent;
+  runAnalysis(btn.textContent);
+  document.getElementById('analysis').scrollIntoView({behavior:'smooth'});
+}
+
+function askConstAnalysis(name) {
+  closeModalBtn();
+  const q = `Give a detailed prediction analysis for the ${name} constituency in WB 2026 elections — candidates, factors, likely outcome.`;
+  document.getElementById('aiQuery').value = q;
+  runAnalysis(q);
+  setTimeout(() => document.getElementById('analysis').scrollIntoView({behavior:'smooth'}), 200);
+}
+
+// ── SCROLL ANIMATION ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold:0.1});
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── NAV ACTIVE ──
+const navLinks = document.querySelectorAll('.nav a');
+const sections = document.querySelectorAll('section[id]');
+window.addEventListener('scroll', () => {
+  let curr = '';
+  sections.forEach(s => { if(window.scrollY >= s.offsetTop - 120) curr = s.id; });
+  navLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#'+curr); });
+});
+
+// ── INIT ──
+renderSeatStrip();
+renderPartyBars();
+renderSeatChart();
+renderTurnoutBars();
+renderTurnoutChart();
+renderDistricts('all');
+renderConstTable();
+</script>
+</body>
+</html>
